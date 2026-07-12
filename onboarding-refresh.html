@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Refresh Stripe Session | Secret Sentinel</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --background: #f8fafc;
+        --border: #e2e8f0;
+        --muted: #64748b;
+        --text: #0f172a;
+        --warning: #d97706;
+        --warning-soft: #fffbeb;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--background);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+      }
+
+      .card {
+        width: min(100%, 420px);
+        padding: 32px;
+        text-align: center;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+      }
+
+      .loader {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 20px;
+        border: 3px solid var(--warning-soft);
+        border-top-color: var(--warning);
+        border-radius: 999px;
+        animation: spin 0.9s linear infinite;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: 23px;
+        line-height: 1.2;
+        letter-spacing: 0;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.6;
+      }
+
+      .actions {
+        display: grid;
+        gap: 10px;
+        margin-top: 26px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 16px;
+        border-radius: 8px;
+        border: 1px solid #0f172a;
+        background: #0f172a;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 650;
+        text-decoration: none;
+      }
+
+      .note {
+        margin-top: 18px;
+        color: #94a3b8;
+        font-size: 12px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .loader {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card" aria-labelledby="page-title">
+      <div class="loader" aria-hidden="true"></div>
+      <h1 id="page-title">Stripe Session Expired</h1>
+      <p>
+        This secure onboarding link needs to be refreshed. Return to the Secret
+        Sentinel app so a fresh Stripe Connect link can be generated for you.
+      </p>
+
+      <div class="actions">
+        <a id="open-app" class="button" href="secretsentinel://stripe/onboarding-refresh">
+          Open Secret Sentinel App
+        </a>
+      </div>
+
+      <div id="status" class="note" role="status">
+        Trying to return you to the app...
+      </div>
+    </main>
+
+    <script>
+      (function () {
+        var openAppLink = document.getElementById("open-app");
+        var status = document.getElementById("status");
+
+        function openApp() {
+          status.textContent =
+            "If the app does not open, tap the button above and retry onboarding.";
+          window.location.href = openAppLink.href;
+        }
+
+        window.setTimeout(openApp, 700);
+      })();
+    </script>
+  </body>
+</html>

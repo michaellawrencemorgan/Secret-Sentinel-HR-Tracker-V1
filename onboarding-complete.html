@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Bank Account Linked | Secret Sentinel</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --background: #f8fafc;
+        --border: #e2e8f0;
+        --muted: #64748b;
+        --text: #0f172a;
+        --success: #059669;
+        --success-soft: #ecfdf5;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--background);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+      }
+
+      .card {
+        width: min(100%, 420px);
+        padding: 32px;
+        text-align: center;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+      }
+
+      .icon {
+        width: 56px;
+        height: 56px;
+        display: inline-grid;
+        place-items: center;
+        margin-bottom: 20px;
+        border-radius: 999px;
+        background: var(--success-soft);
+        color: var(--success);
+        font-size: 32px;
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: 24px;
+        line-height: 1.2;
+        letter-spacing: 0;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.6;
+      }
+
+      .actions {
+        display: grid;
+        gap: 10px;
+        margin-top: 26px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 16px;
+        border-radius: 8px;
+        border: 1px solid #0f172a;
+        background: #0f172a;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 650;
+        text-decoration: none;
+      }
+
+      .button.secondary {
+        border-color: var(--border);
+        background: #fff;
+        color: var(--text);
+      }
+
+      .status {
+        margin-top: 18px;
+        color: #94a3b8;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card" aria-labelledby="page-title">
+      <div class="icon" aria-hidden="true">&#10003;</div>
+      <h1 id="page-title">Bank Account Linked!</h1>
+      <p>
+        Your direct deposit information has been securely updated via Stripe
+        Connect. Return to the Secret Sentinel app to continue onboarding.
+      </p>
+
+      <div class="actions">
+        <a id="open-app" class="button" href="secretsentinel://stripe/onboarding-complete">
+          Open Secret Sentinel App
+        </a>
+        <a class="button secondary" href="https://secretsentinelca.com">
+          Continue on Web Portal
+        </a>
+      </div>
+
+      <div id="status" class="status" role="status">
+        Trying to return you to the app...
+      </div>
+    </main>
+
+    <script>
+      (function () {
+        var openAppLink = document.getElementById("open-app");
+        var status = document.getElementById("status");
+
+        function openApp() {
+          status.textContent =
+            "If the app does not open, tap the button above or close this window.";
+          window.location.href = openAppLink.href;
+        }
+
+        window.setTimeout(openApp, 700);
+      })();
+    </script>
+  </body>
+</html>

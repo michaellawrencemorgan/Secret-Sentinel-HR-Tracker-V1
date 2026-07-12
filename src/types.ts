@@ -12,6 +12,12 @@ export interface UserProfile {
   status: OnboardingStatus;
   stripeLinked: boolean;
   createdAt: string;
+  rating: number;
+  notes: string;
+  agentSpecializations: string[];
+  verifiedCredentials: string[];
+  phone?: string;
+  active: boolean;
 }
 
 export interface DocumentRecord {

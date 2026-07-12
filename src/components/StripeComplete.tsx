@@ -1,11 +1,21 @@
-import React from 'react';
-import { CheckCircle2, ArrowRight, ShieldCheck } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { CheckCircle2, ArrowRight, ExternalLink, ShieldCheck } from 'lucide-react';
 
 interface StripeCompleteProps {
   onNavigate: (path: string) => void;
 }
 
+const APP_DEEP_LINK = 'secretsentinel://stripe/onboarding-complete';
+
 export default function StripeComplete({ onNavigate }: StripeCompleteProps) {
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      window.location.href = APP_DEEP_LINK;
+    }, 700);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
     <div id="stripe-complete-view" className="min-h-screen bg-slate-50 flex flex-col justify-between p-6 md:p-12 font-sans selection:bg-slate-900 selection:text-white">
       {/* Top Header Row */}
@@ -39,7 +49,7 @@ export default function StripeComplete({ onNavigate }: StripeCompleteProps) {
           </h1>
           
           <p className="text-slate-600 text-sm leading-relaxed mb-8 text-center max-w-sm">
-            Your direct deposit information has been securely updated via Stripe Connect. You can now safely close this browser window and return to the Secret Sentinel application.
+            Your direct deposit information has been securely updated via Stripe Connect. Return to the Secret Sentinel app to continue onboarding.
           </p>
 
           <div className="w-full border-t border-slate-100 pt-6 flex flex-col gap-3">
@@ -51,12 +61,21 @@ export default function StripeComplete({ onNavigate }: StripeCompleteProps) {
               </div>
             </div>
 
+            <a
+              id="return-to-app"
+              href={APP_DEEP_LINK}
+              className="mt-2 w-full inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-semibold px-4 py-2.5 rounded transition-all shadow-sm"
+            >
+              Open Secret Sentinel App
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+
             <button
               id="return-to-login"
               onClick={() => onNavigate('/')}
-              className="mt-2 w-full inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-semibold px-4 py-2.5 rounded transition-all shadow-sm"
+              className="w-full inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold px-4 py-2.5 rounded transition-all"
             >
-              Go to Sentinel Portal
+              Continue on Web Portal
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -67,7 +86,7 @@ export default function StripeComplete({ onNavigate }: StripeCompleteProps) {
       <footer className="max-w-7xl mx-auto w-full border-t border-slate-200/60 pt-6 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-4 text-[11px] text-slate-400 font-mono">
         <div>© 2026 Sentinel HR & Compliance. All rights reserved.</div>
         <div className="flex gap-4">
-          <a href="#" className="hover:text-slate-600">Security Protocols</a>
+          <a href="#" className="hover:text-slate-600">Compliance Protocols</a>
           <span>·</span>
           <a href="#" className="hover:text-slate-600">Privacy Policy</a>
           <span>·</span>

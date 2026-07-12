@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
 
 // Set up JSON payload limit for base64 file uploads
 app.use(express.json({ limit: "15mb" }));
@@ -43,6 +43,12 @@ interface DBUser {
   status: "Not Started" | "In Progress" | "Complete";
   stripeLinked: boolean;
   createdAt: string;
+  rating: number;
+  notes: string;
+  agentSpecializations: string[];
+  verifiedCredentials: string[];
+  phone?: string;
+  active: boolean;
 }
 
 interface DBDocument {
@@ -68,6 +74,12 @@ const db = {
       status: "Complete",
       stripeLinked: true,
       createdAt: new Date("2026-01-10").toISOString(),
+      rating: 5,
+      notes: "Internal HR administrator account.",
+      agentSpecializations: [],
+      verifiedCredentials: [],
+      phone: "(555) 010-0001",
+      active: true,
     },
     {
       id: "agent-1",
@@ -77,6 +89,12 @@ const db = {
       status: "In Progress",
       stripeLinked: false,
       createdAt: new Date("2026-07-01").toISOString(),
+      rating: 4,
+      notes: "Strong field judgment and excellent executive movement discipline. Needs W-2 final approval before assignment.",
+      agentSpecializations: ["Discreet Escort", "High-Risk Transport", "Executive Support"],
+      verifiedCredentials: ["CA Guard Card", "CPR / AED / First Aid", "Evasive / Defensive Driving"],
+      phone: "(555) 010-0147",
+      active: true,
     },
     {
       id: "agent-2",
@@ -86,6 +104,12 @@ const db = {
       status: "Complete",
       stripeLinked: true,
       createdAt: new Date("2026-06-15").toISOString(),
+      rating: 5,
+      notes: "Top-tier executive support lead. Best fit for high-discretion assignments.",
+      agentSpecializations: ["Discreet Escort", "Executive Support", "De-escalation Support"],
+      verifiedCredentials: ["CA Guard Card", "CA CCW Permit", "BSIS Exposed Firearm Permit", "Executive Protection (EP) Graduate"],
+      phone: "(555) 010-0224",
+      active: true,
     },
     {
       id: "agent-3",
@@ -95,6 +119,12 @@ const db = {
       status: "Not Started",
       stripeLinked: false,
       createdAt: new Date("2026-07-05").toISOString(),
+      rating: 3,
+      notes: "Pending profile review. Potential fit for sober transport and event support after onboarding.",
+      agentSpecializations: ["Sober Transport", "Event Support"],
+      verifiedCredentials: ["Background Check", "Mental Health First Aid (MHFA)"],
+      phone: "(555) 010-0707",
+      active: true,
     },
     {
       id: "agent-4",
@@ -104,6 +134,27 @@ const db = {
       status: "In Progress",
       stripeLinked: false,
       createdAt: new Date("2026-07-03").toISOString(),
+      rating: 4,
+      notes: "Reliable companion and event support. Awaiting remaining identity document.",
+      agentSpecializations: ["Sober Companion", "Event Support", "Residential Companion"],
+      verifiedCredentials: ["CA Guard Card", "CPR / AED / First Aid", "Narcan/Naloxone Certified"],
+      phone: "(555) 010-1938",
+      active: true,
+    },
+    {
+      id: "agent-5",
+      email: "sarah@sentinel.com",
+      name: "Sarah Connor",
+      role: "agent",
+      status: "Complete",
+      stripeLinked: true,
+      createdAt: new Date("2026-06-28").toISOString(),
+      rating: 5,
+      notes: "Excellent situational awareness. Strong fit for residential companion and emergency response coverage.",
+      agentSpecializations: ["Residential Companion", "Discreet Escort", "De-escalation Support"],
+      verifiedCredentials: ["CA Guard Card", "Chemical/Tear Gas Cert", "Baton Permit", "Defensive Tactics / Combatives"],
+      phone: "(555) 010-2049",
+      active: true,
     },
   ] as DBUser[],
 
@@ -172,6 +223,7 @@ const db = {
     "natasha@sentinel.com": "natasha123",
     "james@sentinel.com": "james123",
     "clark@sentinel.com": "clark123",
+    "sarah@sentinel.com": "sarah123",
   } as Record<string, string>,
 };
 
@@ -194,6 +246,30 @@ function recalculateAgentStatus(userId: string) {
   } else {
     user.status = "Not Started";
   }
+}
+
+function getRequesterFromAuth(req: express.Request) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer local-session-token-")) {
+    return null;
+  }
+
+  const parts = authHeader.split("-");
+  const requesterId = `${parts[3]}-${parts[4]}`;
+  return db.users.find((u) => u.id === requesterId) || null;
+}
+
+function requireAdmin(req: express.Request, res: express.Response) {
+  const requester = getRequesterFromAuth(req);
+  if (!requester) {
+    res.status(401).json({ error: "Unauthorized" });
+    return null;
+  }
+  if (requester.role !== "admin") {
+    res.status(403).json({ error: "Access denied. Admins only." });
+    return null;
+  }
+  return requester;
 }
 
 // ------------------------------------------------------------------
@@ -249,6 +325,12 @@ app.post("/api/auth/register", (req, res) => {
     status: "Not Started",
     stripeLinked: false,
     createdAt: new Date().toISOString(),
+    rating: 0,
+    notes: "",
+    agentSpecializations: [],
+    verifiedCredentials: [],
+    phone: "",
+    active: true,
   };
 
   db.users.push(newUser);
@@ -278,26 +360,134 @@ app.get("/api/auth/me", (req, res) => {
   return res.json({ user });
 });
 
-// Get List of Agents (Admin only)
+// Get List of Agents
 app.get("/api/agents", (req, res) => {
-  // Simple auth validation
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  const requester = requireAdmin(req, res);
+  if (!requester) return;
 
-  // Admin access validation
-  const parts = authHeader.split("-");
-  const requesterId = `${parts[3]}-${parts[4]}`;
-  const requester = db.users.find((u) => u.id === requesterId);
-
-  if (!requester || requester.role !== "admin") {
-    return res.status(403).json({ error: "Access denied. Admins only." });
-  }
-
-  // Filter out admins so we only display onboarding agents
+  // Filter out admins so we only display agent profiles
   const agents = db.users.filter((u) => u.role === "agent");
   return res.json({ agents });
+});
+
+// Create Agent Profile
+app.post("/api/agents", (req, res) => {
+  const requester = requireAdmin(req, res);
+  if (!requester) return;
+
+  const {
+    name,
+    email,
+    phone,
+    status,
+    rating,
+    notes,
+    agentSpecializations,
+    verifiedCredentials,
+    active,
+  } = req.body;
+
+  if (!name || !email) {
+    return res.status(400).json({ error: "Name and email are required." });
+  }
+
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const existing = db.users.find((u) => u.email.toLowerCase() === normalizedEmail);
+  if (existing) {
+    return res.status(400).json({ error: "An agent with this email already exists." });
+  }
+
+  const validStatuses = ["Not Started", "In Progress", "Complete"];
+  const newAgent: DBUser = {
+    id: `agent-${Date.now()}`,
+    email: normalizedEmail,
+    name: String(name).trim(),
+    role: "agent",
+    status: validStatuses.includes(status) ? status : "Not Started",
+    stripeLinked: false,
+    createdAt: new Date().toISOString(),
+    rating: typeof rating === "number" ? Math.max(0, Math.min(5, Math.round(rating))) : 0,
+    notes: typeof notes === "string" ? notes : "",
+    agentSpecializations: Array.isArray(agentSpecializations)
+      ? agentSpecializations.filter((item) => typeof item === "string")
+      : [],
+    verifiedCredentials: Array.isArray(verifiedCredentials)
+      ? verifiedCredentials.filter((item) => typeof item === "string")
+      : [],
+    phone: typeof phone === "string" ? phone : "",
+    active: typeof active === "boolean" ? active : true,
+  };
+
+  db.users.push(newAgent);
+  db.passwords[normalizedEmail] = "agent123";
+
+  return res.status(201).json({ agent: newAgent });
+});
+
+// Update Agent Profile
+app.patch("/api/agents/:id", (req, res) => {
+  const requester = requireAdmin(req, res);
+  if (!requester) return;
+
+  const { id } = req.params;
+  const agent = db.users.find((u) => u.id === id && u.role === "agent");
+
+  if (!agent) {
+    return res.status(404).json({ error: "Agent profile not found" });
+  }
+
+  const {
+    name,
+    email,
+    phone,
+    status,
+    rating,
+    notes,
+    agentSpecializations,
+    verifiedCredentials,
+    active,
+  } = req.body;
+
+  const validStatuses = ["Not Started", "In Progress", "Complete"];
+
+  if (typeof name === "string") agent.name = name.trim() || agent.name;
+  if (typeof email === "string") agent.email = email.trim().toLowerCase() || agent.email;
+  if (typeof phone === "string") agent.phone = phone;
+  if (typeof notes === "string") agent.notes = notes;
+  if (typeof active === "boolean") agent.active = active;
+  if (typeof status === "string" && validStatuses.includes(status)) {
+    agent.status = status as DBUser["status"];
+  }
+  if (typeof rating === "number") {
+    agent.rating = Math.max(0, Math.min(5, Math.round(rating)));
+  }
+  if (Array.isArray(agentSpecializations)) {
+    agent.agentSpecializations = agentSpecializations.filter((item) => typeof item === "string");
+  }
+  if (Array.isArray(verifiedCredentials)) {
+    agent.verifiedCredentials = verifiedCredentials.filter((item) => typeof item === "string");
+  }
+
+  return res.json({ agent });
+});
+
+// Delete Agent Profile
+app.delete("/api/agents/:id", (req, res) => {
+  const requester = requireAdmin(req, res);
+  if (!requester) return;
+
+  const { id } = req.params;
+  const agent = db.users.find((u) => u.id === id && u.role === "agent");
+
+  if (!agent) {
+    return res.status(404).json({ error: "Agent profile not found" });
+  }
+
+  db.users = db.users.filter((u) => u.id !== id);
+  db.documents = db.documents.filter((document) => document.userId !== id);
+  delete db.passwords[agent.email.toLowerCase()];
+
+  return res.json({ deletedAgentId: id });
 });
 
 // Get Documents for a specific user (or all if admin)

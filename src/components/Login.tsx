@@ -19,6 +19,20 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     supabaseUrl: null,
   });
 
+  const parseApiResponse = async (response: Response) => {
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      return response.json();
+    }
+
+    const body = await response.text();
+    if (body.trimStart().startsWith('<')) {
+      throw new Error('The API server returned the web app instead of JSON. Deploy with Firebase App Hosting or another Node backend so /api routes reach server.ts.');
+    }
+
+    throw new Error(body || `Unexpected API response (${response.status}).`);
+  };
+
   // Fetch the configuration to display the Database state banner (Local Mode vs Supabase Mode)
   useEffect(() => {
     fetch('/api/config')
@@ -42,7 +56,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         body: JSON.stringify(body),
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse(response);
 
       if (!response.ok) {
         throw new Error(data.error || 'Authentication failed');
