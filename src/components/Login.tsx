@@ -245,6 +245,20 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                 "Verify Credentials & Sign In"
               )}
             </button>
+
+            {isRegisterMode && (
+              <p className="text-center text-[11px] leading-5 text-slate-500">
+                By creating an account, you agree to the{' '}
+                <a href="/termsandconditions" className="font-semibold text-slate-800 underline underline-offset-4 hover:text-slate-950">
+                  Terms and Conditions
+                </a>{' '}
+                and acknowledge the{' '}
+                <a href="/classifications" className="font-semibold text-slate-800 underline underline-offset-4 hover:text-slate-950">
+                  Sentinel Agent Classification Index
+                </a>
+                .
+              </p>
+            )}
           </form>
 
           {/* Switch Auth Modes */}

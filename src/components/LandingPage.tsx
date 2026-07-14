@@ -74,6 +74,8 @@ export default function LandingPage() {
             <a href="#platform" className="hover:text-slate-950">Platform</a>
             <a href="#operations" className="hover:text-slate-950">Operations</a>
             <a href="#agents" className="hover:text-slate-950">Agents</a>
+            <a href="/termsandconditions" className="hover:text-slate-950">Terms</a>
+            <a href="/classifications" className="hover:text-slate-950">Classifications</a>
           </nav>
 
           <a
@@ -287,6 +289,10 @@ export default function LandingPage() {
             <div>
               <h2 className="font-display text-2xl font-bold tracking-tight">Bring real-time protection into focus.</h2>
               <p className="mt-2 text-sm text-slate-400">Real-time protection tools for clients, agents, and dispatch teams.</p>
+              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-slate-300">
+                <a href="/termsandconditions" className="hover:text-white">Terms and Conditions</a>
+                <a href="/classifications" className="hover:text-white">Sentinel Agent Classification Index</a>
+              </div>
             </div>
             <a
               href="#platform"

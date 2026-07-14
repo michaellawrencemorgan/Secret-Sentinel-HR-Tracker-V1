@@ -284,6 +284,17 @@ app.get("/api/config", (req, res) => {
   });
 });
 
+// Deployment health check. If this returns HTML, the deployed URL is serving
+// the static SPA instead of this Express server.
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    service: "sentinel-express-api",
+    runtime: process.env.NODE_ENV || "development",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Authentication: Login
 app.post("/api/auth/login", (req, res) => {
   const { email, password } = req.body;
@@ -704,9 +715,27 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, {
+      index: false,
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith("index.html")) {
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+          return;
+        }
+
+        if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        }
+      },
+    }));
+
+    app.get("/assets/*", (req, res) => {
+      res.status(404).type("text/plain").send("Asset not found");
+    });
+
     // SPA fallback
     app.get("*", (req, res) => {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
